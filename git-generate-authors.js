@@ -27,7 +27,14 @@ if (options.output == '-') {
 	output = fs.createWriteStream(options.output);
 }
 
-output.write('# Authors ordered by first contribution.\n\n');
+const readableOrder = {
+	time: 'by first commit',
+	commits: 'by number of commits',
+	name: 'alphabetically by name',
+	email: 'alphabetically by email',
+}[options.sort];
+
+output.write(`# Authors ordered ${readableOrder}.\n\n`);
 for (const author of allAuthors) {
 	output.write(`${author.name} <${author.email}>\n`);
 }
