@@ -1,9 +1,12 @@
 {
-	"name": "git-update-authors",
+	"name": "git-generate-authors",
 	"version": "1.0.0",
 	"description": "Generate AUTHORS file based on Git's history",
 	"type": "module",
 	"main": "index.js",
+	"bin": {
+		"git-generate-authors": "./git-generate-authors.js"
+	},
 	"scripts": {
 		"prepare": "npx husky install",
 		"prettier": "npx prettier --write ."
