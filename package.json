@@ -1,0 +1,41 @@
+{
+	"name": "git-update-authors",
+	"version": "1.0.0",
+	"description": "Generate AUTHORS file based on Git's history",
+	"main": "index.js",
+	"scripts": {
+		"prepare": "npx husky install",
+		"prettier": "npx prettier --write ."
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/socram8888/git-generate-authors.git"
+	},
+	"keywords": [
+		"git",
+		"history",
+		"authors",
+		"log",
+		"contributors",
+		"automatic",
+		"pipeline",
+		"update",
+		"generate"
+	],
+	"prettier": "@socram/prettier-config",
+	"author": "Marcos Del Sol Vives <marcos@orca.pet>",
+	"license": "WTFPL",
+	"bugs": {
+		"url": "https://github.com/socram8888/git-generate-authors/issues"
+	},
+	"homepage": "https://github.com/socram8888/git-generate-authors#readme",
+	"devDependencies": {
+		"@socram/prettier-config": "^1.0.0",
+		"husky": "^8.0.1",
+		"prettier": "^2.6.2",
+		"pretty-quick": "^3.1.3"
+	},
+	"dependencies": {
+		"commander": "^9.2.0"
+	}
+}
