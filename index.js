@@ -13,7 +13,7 @@ export async function gitGetAuthors(options) {
 	);
 	const rl = readline.createInterface({ input: log.stdout });
 
-	const allAuthors = [];
+	let allAuthors = [];
 	const authorRe = /(^Author:|^Co-authored-by:)\s+(?<name>.+)\s+<(?<email>.+)>/i;
 	for await (const line of rl) {
 		const match = line.match(authorRe);
@@ -62,6 +62,10 @@ export async function gitGetAuthors(options) {
 		author.name = name;
 		author.email = email;
 		author.commits++;
+	}
+
+	if (!options.keepBots) {
+		allAuthors = allAuthors.filter((author) => !author.name.match(/-bot|\[bot\]$/));
 	}
 
 	switch (options.sort) {

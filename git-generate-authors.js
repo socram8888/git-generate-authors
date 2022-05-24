@@ -13,7 +13,8 @@ program
 		new Option('-s, --sort <sorting>', 'sorting parameter')
 			.choices(['time', 'commits', 'name', 'email'])
 			.default('time')
-	);
+	)
+	.option('--keep-bots', 'keep bots in history');
 program.parse();
 const options = program.opts();
 
