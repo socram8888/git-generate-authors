@@ -1,12 +1,17 @@
 import readline from 'node:readline';
 import fs from 'node:fs';
-import { program } from 'commander';
+import { program, Option } from 'commander';
 import { spawn } from 'node:child_process';
 
 program
 	.name('git-update-authors')
 	.description("Generate AUTHORS file based on Git's history")
-	.option('-o, --output <file>', 'write result to this file', 'AUTHORS');
+	.option('-o, --output <file>', 'write result to this file', 'AUTHORS')
+	.addOption(
+		new Option('-s, --sort <sorting>', 'sorting parameter')
+			.choices(['time', 'commits', 'name', 'email'])
+			.default('time')
+	);
 program.parse();
 const options = program.opts();
 
@@ -69,6 +74,22 @@ for await (const line of rl) {
 	author.name = name;
 	author.email = email;
 	author.commits++;
+}
+
+console.debug(`Found ${allAuthors.length} author(s)`);
+
+switch (options.sort) {
+	case 'commits':
+		allAuthors.sort((a, b) => a.commits - b.commits);
+		break;
+
+	case 'name':
+		allAuthors.sort((a, b) => a.name.localeCompare(b.name));
+		break;
+
+	case 'email':
+		allAuthors.sort((a, b) => a.email.localeCompare(b.email));
+		break;
 }
 
 let output;
