@@ -70,7 +70,7 @@ export async function gitGetAuthors(options) {
 
 	switch (options.sort) {
 		case 'commits':
-			allAuthors.sort((a, b) => a.commits - b.commits);
+			allAuthors.sort((a, b) => b.commits - a.commits);
 			break;
 
 		case 'name':
