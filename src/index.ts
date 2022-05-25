@@ -7,16 +7,11 @@ const FIELD_SEPARATOR = '\x1F';
 /**
  * Options for generating the author list.
  */
-export interface GitGetAuthorOptions {
+export interface GitGetAuthorsByEmailOptions {
 	/**
 	 * Optional path to repository.
 	 */
 	repo?: string;
-
-	/**
-	 * Optional sorting.
-	 */
-	sort?: 'first-commit' | 'last-commit' | 'commits' | 'name' | 'email';
 
 	/**
 	 * Set to disable bot filtering logic.
@@ -27,6 +22,16 @@ export interface GitGetAuthorOptions {
 	 * Set to skip passing mailmap flag to Git.
 	 */
 	skipMailmap?: boolean;
+}
+
+/**
+ * Options for generating the author list.
+ */
+export interface GitGetAuthorsOptions extends GitGetAuthorsByEmailOptions {
+	/**
+	 * Optional sorting.
+	 */
+	sort?: 'first-commit' | 'last-commit' | 'commits' | 'name' | 'email';
 }
 
 /**
@@ -62,10 +67,12 @@ export interface GitAuthor {
 /**
  * Calculates a list of all Git authors for the given repo's current branch.
  *
- * @param options options for the algorithm
- * @returns an array of authors
+ * @param options options for the data extraction
+ * @returns author information by email
  */
-export async function gitGetAuthors(options?: GitGetAuthorOptions): Promise<GitAuthor[]> {
+export async function gitGetAuthorsByEmail(
+	options?: GitGetAuthorsByEmailOptions
+): Promise<Record<string, GitAuthor>> {
 	const log = spawn(
 		'git',
 		// Inspect author name/email and body.
@@ -85,20 +92,24 @@ export async function gitGetAuthors(options?: GitGetAuthorOptions): Promise<GitA
 	const authorsMap: Record<string, GitAuthor> = {};
 	for await (const line of rl) {
 		const parts = line.split(FIELD_SEPARATOR);
-		if (parts.length != 3) continue;
+		if (parts.length != 3) {
+			continue;
+		}
 
 		const name = parts[0];
 		const email = parts[1].toLowerCase();
 		const date = new Date(parts[2]);
 
-		const index = name.toLowerCase() + FIELD_SEPARATOR + email;
-		const author = authorsMap[index];
+		if (!options?.keepBots && name.match(/-bot|\[bot\]$/i)) {
+			continue;
+		}
 
+		const author = authorsMap[email];
 		if (author) {
 			author.commits++;
 			author.lastCommit = date;
 		} else {
-			authorsMap[index] = {
+			authorsMap[email] = {
 				name,
 				email,
 				commits: 1,
@@ -108,10 +119,18 @@ export async function gitGetAuthors(options?: GitGetAuthorOptions): Promise<GitA
 		}
 	}
 
-	let allAuthors = Object.values(authorsMap);
-	if (!options?.keepBots) {
-		allAuthors = allAuthors.filter((author) => !author.name.match(/-bot|\[bot\]$/));
-	}
+	return authorsMap;
+}
+
+/**
+ * Calculates a list of all Git authors for the given repo's current branch.
+ *
+ * @param options options for the data extraction
+ * @returns a sorted array of authors
+ */
+export async function gitGetAuthors(options?: GitGetAuthorsOptions): Promise<GitAuthor[]> {
+	const authorsMap = await gitGetAuthorsByEmail(options);
+	const allAuthors = Object.values(authorsMap);
 
 	switch (options?.sort) {
 		case 'first-commit':
