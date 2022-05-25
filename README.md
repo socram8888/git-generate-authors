@@ -10,12 +10,13 @@ You can run this on any machine with node and Git installed, using:
 
 ### Options
 
-| Short | Long          | Description                                                    | Default                   |
-| ----- | ------------- | -------------------------------------------------------------- | ------------------------- |
-| `-o`  | `--output`    | Output file                                                    | `AUTHORS`                 |
-| `-r`  | `--repo`      | Repository path                                                | Current working directory |
-| `-s`  | `--sort`      | Sorting parameter. Can be `time`, `commits`, `name` or `email` | `time`                    |
-|       | `--keep-bots` | If passed, the bots will not be removed from the history       |                           |
+| Short | Long             | Description                                                                           | Default                   |
+| ----- | ---------------- | ------------------------------------------------------------------------------------- | ------------------------- |
+| `-o`  | `--output`       | Output file                                                                           | `AUTHORS`                 |
+| `-r`  | `--repo`         | Repository path                                                                       | Current working directory |
+| `-s`  | `--sort`         | Sorting parameter. Can be `first-commit`, `last-commit`, `commits`, `name` or `email` | `first-commit`            |
+|       | `--keep-bots`    | If passed, the bots will not be removed from the history                              |                           |
+|       | `--skip-mailmap` | If passed, Git will not use the .mailmap file for aliasing users                      |                           |
 
 ## Known issues
 
