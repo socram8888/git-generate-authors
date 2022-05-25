@@ -18,7 +18,7 @@
 		"build": "npm run-script clean && npm run-script compile",
 		"clean": "rimraf dist",
 		"compile": "npx tsc",
-		"prettier": "npx prettier --write src *.json"
+		"prettier": "npx prettier --write src *.json *.md"
 	},
 	"repository": {
 		"type": "git",
