@@ -30,3 +30,6 @@ jobs:
 
     - name: Build
       run: npm run-script build
+
+    - name: Attempt to run
+      run: node dist/git-generate-authors.js
