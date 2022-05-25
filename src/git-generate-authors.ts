@@ -17,10 +17,11 @@ interface ProgramOptions extends GitGetAuthorOptions {
 		.option('-r, --repo <dir>', 'repository path')
 		.addOption(
 			new Option('-s, --sort <sorting>', 'sorting parameter')
-				.choices(['time', 'commits', 'name', 'email'])
-				.default('time')
+				.choices(['first-commit', 'last-commit', 'commits', 'name', 'email'])
+				.default('first-commit')
 		)
-		.option('--keep-bots', 'keep bots in history');
+		.option('--keep-bots', 'keep bots in history')
+		.option('--skip-mailmap', 'do not use mailmap');
 	program.parse();
 	const options: ProgramOptions = program.opts();
 
@@ -35,7 +36,8 @@ interface ProgramOptions extends GitGetAuthorOptions {
 	}
 
 	const readableOrder = {
-		time: 'by first commit',
+		'first-commit': 'by first commit',
+		'last-commit': 'by last commit',
 		commits: 'by number of commits',
 		name: 'alphabetically by name',
 		email: 'alphabetically by email',

@@ -1,6 +1,9 @@
 import readline from 'readline';
 import { spawn } from 'child_process';
 
+// ASCII "field separator" character
+const FIELD_SEPARATOR = '\x1F';
+
 /**
  * Options for generating the author list.
  */
@@ -13,12 +16,17 @@ export interface GitGetAuthorOptions {
 	/**
 	 * Optional sorting.
 	 */
-	sort?: 'time' | 'commits' | 'name' | 'email';
+	sort?: 'first-commit' | 'last-commit' | 'commits' | 'name' | 'email';
 
 	/**
 	 * Set to disable bot filtering logic.
 	 */
 	keepBots?: boolean;
+
+	/**
+	 * Set to skip passing mailmap flag to Git.
+	 */
+	skipMailmap?: boolean;
 }
 
 /**
@@ -26,12 +34,12 @@ export interface GitGetAuthorOptions {
  */
 export interface GitAuthor {
 	/**
-	 * Last known name.
+	 * Author's name.
 	 */
 	name: string;
 
 	/**
-	 * Last known email.
+	 * Author's email.
 	 */
 	email: string;
 
@@ -41,14 +49,14 @@ export interface GitAuthor {
 	commits: number;
 
 	/**
-	 * List of all known names, in lowercase.
+	 * First commit date.
 	 */
-	knownNames: Set<string>;
+	firstCommit: Date;
 
 	/**
-	 * List of all known emails, in lowercase.
+	 * Last commit date.
 	 */
-	knownEmails: Set<string>;
+	lastCommit: Date;
 }
 
 /**
@@ -61,7 +69,12 @@ export async function gitGetAuthors(options?: GitGetAuthorOptions): Promise<GitA
 	const log = spawn(
 		'git',
 		// Inspect author name/email and body.
-		['log', '--reverse', '--format=Author: %aN <%aE>\n%b'],
+		[
+			'log',
+			'--reverse',
+			options?.skipMailmap ? '--no-mailmap' : '--mailmap',
+			`--format=%aN${FIELD_SEPARATOR}%aE${FIELD_SEPARATOR}%aD`,
+		],
 		{
 			cwd: options?.repo,
 			stdio: ['ignore', 'pipe', 'inherit'],
@@ -69,69 +82,46 @@ export async function gitGetAuthors(options?: GitGetAuthorOptions): Promise<GitA
 	);
 	const rl = readline.createInterface({ input: log.stdout });
 
-	let allAuthors: GitAuthor[] = [];
-	const authorRe = /(^Author:|^Co-authored-by:)\s+(?<name>.+)\s+<(?<email>.+)>/i;
+	const authorsMap: Record<string, GitAuthor> = {};
 	for await (const line of rl) {
-		const match = line.match(authorRe);
-		if (!match) continue;
+		const parts = line.split(FIELD_SEPARATOR);
+		if (parts.length != 3) continue;
 
-		let { name, email } = match.groups!;
-		const lowerName = name.toLowerCase();
-		const lowerEmail = email.toLowerCase();
+		const name = parts[0];
+		const email = parts[1].toLowerCase();
+		const date = new Date(parts[2]);
 
-		const nameIndex = allAuthors.findIndex((x) => x.knownNames.has(lowerName));
-		const emailIndex = allAuthors.findIndex((x) => x.knownEmails.has(lowerEmail));
+		const index = name.toLowerCase() + FIELD_SEPARATOR + email;
+		const author = authorsMap[index];
 
-		const foundByName = nameIndex >= 0;
-		const foundByEmail = emailIndex >= 0;
-
-		if (!foundByName && !foundByEmail) {
-			allAuthors.push({
+		if (author) {
+			author.commits++;
+			author.lastCommit = date;
+		} else {
+			authorsMap[index] = {
 				name,
 				email,
-				knownNames: new Set([lowerName]),
-				knownEmails: new Set([lowerEmail]),
 				commits: 1,
-			});
-		} else {
-			let author: GitAuthor;
-
-			if (foundByName && foundByEmail && nameIndex != emailIndex) {
-				/*
-				 * We've found two different entries, so we'll need to merge them.
-				 * We'll keep the oldest one, and remove the newer.
-				 */
-				const oldest = Math.min(nameIndex, emailIndex);
-				const newest = Math.max(nameIndex, emailIndex);
-
-				author = allAuthors[oldest];
-				let [duplicate] = allAuthors.splice(newest, 1);
-
-				duplicate.knownNames.forEach(author.knownNames.add, author.knownNames);
-				duplicate.knownEmails.forEach(author.knownEmails.add, author.knownEmails);
-				author.commits += duplicate.commits;
-			} else if (foundByName) {
-				author = allAuthors[nameIndex];
-
-				if (!foundByEmail) {
-					author.knownEmails.add(lowerEmail);
-				}
-			} else {
-				author = allAuthors[emailIndex];
-				author.knownNames.add(lowerName);
-			}
-
-			author.name = name;
-			author.email = email;
-			author.commits++;
+				firstCommit: date,
+				lastCommit: date,
+			};
 		}
 	}
 
+	let allAuthors = Object.values(authorsMap);
 	if (!options?.keepBots) {
 		allAuthors = allAuthors.filter((author) => !author.name.match(/-bot|\[bot\]$/));
 	}
 
 	switch (options?.sort) {
+		case 'first-commit':
+			allAuthors.sort((a, b) => a.firstCommit.getTime() - b.firstCommit.getTime());
+			break;
+
+		case 'last-commit':
+			allAuthors.sort((a, b) => a.lastCommit.getTime() - b.lastCommit.getTime());
+			break;
+
 		case 'commits':
 			allAuthors.sort((a, b) => b.commits - a.commits);
 			break;
