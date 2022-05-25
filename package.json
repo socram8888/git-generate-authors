@@ -2,13 +2,18 @@
 	"name": "git-generate-authors",
 	"version": "1.0.0",
 	"description": "Generate AUTHORS file based on Git's history",
-	"type": "module",
-	"main": "index.js",
+	"main": "dist/index.js",
+	"files": [
+		"dist/*"
+	],
 	"bin": {
-		"git-generate-authors": "./git-generate-authors.js"
+		"git-generate-authors": "dist/git-generate-authors.js"
 	},
 	"scripts": {
 		"prepare": "npx husky install",
+		"build": "npm run-script clean && npm run-script compile",
+		"clean": "rimraf dist",
+		"compile": "npx tsc",
 		"prettier": "npx prettier --write ."
 	},
 	"repository": {
@@ -33,13 +38,17 @@
 		"url": "https://github.com/socram8888/git-generate-authors/issues"
 	},
 	"homepage": "https://github.com/socram8888/git-generate-authors#readme",
-	"devDependencies": {
-		"@socram/prettier-config": "^1.0.0",
-		"husky": "^8.0.1",
-		"prettier": "^2.6.2",
-		"pretty-quick": "^3.1.3"
-	},
 	"dependencies": {
 		"commander": "^9.2.0"
+	},
+	"devDependencies": {
+		"@socram/prettier-config": "^1.0.0",
+		"@tsconfig/node14": "^1.0.1",
+		"@types/node": "^17.0.35",
+		"husky": "^8.0.1",
+		"prettier": "^2.6.2",
+		"pretty-quick": "^3.1.3",
+		"rimraf": "^3.0.2",
+		"typescript": "^4.7.2"
 	}
 }
